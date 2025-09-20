@@ -1,0 +1,21 @@
+# Docker Compose 覆盖配置示例
+# 复制此文件为 docker-compose.override.yml 并修改相应的值
+# 注意：docker-compose.override.yml 会被 .gitignore 忽略
+
+version: '3.8'
+
+services:
+  mysql:
+    environment:
+      MYSQL_ROOT_PASSWORD: your-secure-root-password
+      MYSQL_PASSWORD: your-secure-database-password
+      MYSQL_USER: your-database-user
+
+  redis:
+    command: redis-server --requirepass your-secure-redis-password
+
+  backend-dev:
+    environment:
+      - DB_PASSWORD=your-secure-database-password
+      - JWT_SECRET=your-super-secret-jwt-key-here
+      - REDIS_PASSWORD=your-secure-redis-password
