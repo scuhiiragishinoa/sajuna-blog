@@ -37,8 +37,6 @@
 
 ## 注意事项
 
-⚠️ **重要**：不要将包含真实密码的文件提交到Git仓库！
-
 - `env.dev` - 开发环境配置（包含真实密码）
 - `docker-compose.override.yml` - 生产环境配置（包含真实密码）
 - `security-report.txt` - 安全检查报告
