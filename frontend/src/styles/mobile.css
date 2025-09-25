@@ -1,0 +1,265 @@
+/* 移动端优化样式 */
+
+/* 移动端触摸优化 */
+@media (max-width: 768px) {
+  /* 增加触摸目标大小 */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 12px 16px;
+  }
+  
+  /* 优化按钮间距 */
+  .el-button {
+    min-height: 44px;
+    padding: 12px 16px;
+    font-size: 16px;
+  }
+  
+  /* 优化输入框 */
+  .el-input__inner {
+    min-height: 44px;
+    font-size: 16px;
+  }
+  
+  /* 优化选择器 */
+  .el-select {
+    min-height: 44px;
+  }
+  
+  /* 优化表格 */
+  .el-table {
+    font-size: 14px;
+  }
+  
+  .el-table th,
+  .el-table td {
+    padding: 8px 4px;
+  }
+  
+  /* 优化卡片 */
+  .el-card {
+    margin-bottom: 12px;
+  }
+  
+  .el-card__body {
+    padding: 16px;
+  }
+  
+  /* 优化对话框 */
+  .el-dialog {
+    width: 95%;
+    margin: 5vh auto;
+  }
+  
+  /* 优化抽屉 */
+  .el-drawer {
+    width: 90% !important;
+  }
+  
+  /* 优化分页 */
+  .el-pagination {
+    text-align: center;
+  }
+  
+  .el-pagination .el-pager li {
+    min-width: 32px;
+    height: 32px;
+    line-height: 32px;
+  }
+}
+
+/* 移动端滚动优化 */
+@media (max-width: 768px) {
+  /* 平滑滚动 */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  /* 优化滚动条 */
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
+  }
+  
+  /* 防止水平滚动 */
+  body {
+    overflow-x: hidden;
+  }
+  
+  /* 优化长文本换行 */
+  .el-card p,
+  .el-card h1,
+  .el-card h2,
+  .el-card h3 {
+    word-wrap: break-word;
+    word-break: break-word;
+  }
+}
+
+/* 移动端导航优化 */
+@media (max-width: 768px) {
+  /* 固定导航栏 */
+  .mobile-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* 主内容区域适配 */
+  .responsive-main {
+    margin-top: 60px;
+    padding: 12px;
+  }
+  
+  /* 容器内边距调整 */
+  .container {
+    padding: 0 12px;
+  }
+}
+
+/* 移动端表单优化 */
+@media (max-width: 768px) {
+  .el-form-item {
+    margin-bottom: 20px;
+  }
+  
+  .el-form-item__label {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  
+  .el-form-item__content {
+    line-height: 1.5;
+  }
+  
+  /* 优化文本域 */
+  .el-textarea__inner {
+    min-height: 100px;
+    font-size: 16px;
+  }
+}
+
+/* 移动端列表优化 */
+@media (max-width: 768px) {
+  .el-list-item {
+    padding: 12px 0;
+  }
+  
+  .el-list-item__content {
+    font-size: 14px;
+  }
+  
+  /* 优化步骤条 */
+  .el-steps {
+    padding: 12px 0;
+  }
+  
+  .el-step__title {
+    font-size: 14px;
+  }
+  
+  .el-step__description {
+    font-size: 12px;
+  }
+}
+
+/* 移动端消息提示优化 */
+@media (max-width: 768px) {
+  .el-message {
+    min-width: 200px;
+    max-width: 90%;
+  }
+  
+  .el-notification {
+    width: 90%;
+    max-width: 400px;
+  }
+}
+
+/* 移动端加载优化 */
+@media (max-width: 768px) {
+  .el-loading-mask {
+    background-color: rgba(255, 255, 255, 0.9);
+  }
+  
+  .el-loading-spinner {
+    margin-top: -25px;
+  }
+}
+
+/* 移动端动画优化 */
+@media (max-width: 768px) {
+  /* 减少动画以提升性能 */
+  .el-fade-in-linear,
+  .el-fade-in,
+  .el-zoom-in-center,
+  .el-zoom-in-top,
+  .el-zoom-in-bottom {
+    animation-duration: 0.2s;
+  }
+  
+  /* 优化过渡效果 */
+  .el-transition {
+    transition-duration: 0.2s;
+  }
+}
+
+/* 移动端字体优化 */
+@media (max-width: 768px) {
+  /* 防止字体大小调整 */
+  html {
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+  }
+  
+  /* 优化字体渲染 */
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* 移动端图片优化 */
+@media (max-width: 768px) {
+  img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+  
+  /* 优化图片加载 */
+  .responsive-image {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+  }
+}
+
+/* 移动端视频优化 */
+@media (max-width: 768px) {
+  video {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* 移动端iframe优化 */
+@media (max-width: 768px) {
+  iframe {
+    max-width: 100%;
+    height: auto;
+  }
+}
