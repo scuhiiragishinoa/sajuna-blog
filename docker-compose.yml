@@ -26,12 +26,46 @@ services:
     volumes:
       - redis_data:/data
 
+  # Tars Registry服务
+  tars-registry:
+    image: tarscloud/tars:latest
+    container_name: sajuna-blog-tars-registry
+    restart: always
+    ports:
+      - "17890:17890"
+    environment:
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USER=blog_user
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-blog_password}
+      - MYSQL_DATABASE=sajuna_blog
+    depends_on:
+      - mysql
+    volumes:
+      - tars_data:/data/tars
+
+  # Tars Gateway服务
+  tars-gateway:
+    image: tarscloud/tars-gateway:latest
+    container_name: sajuna-blog-tars-gateway
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - REGISTRY_HOST=tars-registry
+      - REGISTRY_PORT=17890
+    depends_on:
+      - tars-registry
+    volumes:
+      - ./configs/nginx-dev.conf:/etc/nginx/nginx.conf
+
+  # 博客后端服务
   backend:
     build: ./backend
     container_name: sajuna-blog-backend
     restart: always
     ports:
-      - "8080:8080"
+      - "10000:10000"
     environment:
       - DB_HOST=mysql
       - DB_PORT=3306
@@ -40,10 +74,11 @@ services:
       - DB_NAME=sajuna_blog
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - GIN_TRUSTED_PROXIES=172.18.0.0/16  # 信任Docker网络内的代理
+      - TARS_REGISTRY=tars-registry:17890
     depends_on:
       - mysql
       - redis
+      - tars-registry
     volumes:
       - ./backend:/app
       - /app/vendor
@@ -63,6 +98,7 @@ services:
 volumes:
   mysql_data:
   redis_data:
+  tars_data:
 
 
 

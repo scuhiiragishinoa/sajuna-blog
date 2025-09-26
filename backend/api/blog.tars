@@ -1,0 +1,67 @@
+module sajuna_blog
+{
+    // 用户相关接口
+    interface UserService
+    {
+        // 用户注册
+        int register(string username, string password, string email, out string message);
+        
+        // 用户登录
+        int login(string username, string password, out string token, out string message);
+        
+        // 获取用户信息
+        int getProfile(string token, out string userInfo, out string message);
+    };
+
+    // 文章相关接口
+    interface ArticleService
+    {
+        // 获取文章列表
+        int getArticles(int page, int pageSize, string category, string tag, out string articles, out string message);
+        
+        // 获取文章详情
+        int getArticle(int articleId, out string article, out string message);
+        
+        // 创建文章
+        int createArticle(string token, string title, string content, string summary, int categoryId, string tags, out string message);
+        
+        // 更新文章
+        int updateArticle(string token, int articleId, string title, string content, string summary, int categoryId, string tags, out string message);
+        
+        // 删除文章
+        int deleteArticle(string token, int articleId, out string message);
+    };
+
+    // 分类相关接口
+    interface CategoryService
+    {
+        // 获取分类列表
+        int getCategories(out string categories, out string message);
+        
+        // 创建分类
+        int createCategory(string token, string name, string slug, out string message);
+    };
+
+    // 标签相关接口
+    interface TagService
+    {
+        // 获取标签列表
+        int getTags(out string tags, out string message);
+        
+        // 创建标签
+        int createTag(string token, string name, string slug, out string message);
+    };
+
+    // 评论相关接口
+    interface CommentService
+    {
+        // 获取文章评论
+        int getComments(int articleId, int page, int pageSize, out string comments, out string message);
+        
+        // 创建评论
+        int createComment(int articleId, string authorName, string authorEmail, string content, int parentId, out string message);
+        
+        // 删除评论
+        int deleteComment(string token, int commentId, out string message);
+    };
+};

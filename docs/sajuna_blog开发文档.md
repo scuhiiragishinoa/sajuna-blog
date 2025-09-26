@@ -1,5 +1,3 @@
-您的文档格式整体良好，结构清晰。我对内容进行了一些细微的调整和优化，使其更加规范和易读：
-
 # Sajuna Blog 开发文档
 
 **2025年9月25日**
@@ -15,7 +13,7 @@
 本项目使用 Docker 进行容器化部署，采用前后端分离架构设计：
 
 - **前端**：使用 Vue3 框架，采用响应式设计适配移动端，在 [localhost:3000](http://localhost:3000) 端口上进行开发
-- **后端**：使用 Go + Gin + GORM 以及 **Tars 微服务架构**，在 [localhost:8080](http://localhost:8080) 上运行，作为所有微服务的统一入口
+- **后端**：使用 Go + Tars 微服务框架 + GORM，通过 TarsGateway 提供 HTTP API 服务，在 [localhost:8080](http://localhost:8080) 上运行
 - **数据库**：使用 [MySQL](http://localhost:3306) + [Redis](http://localhost:6379)
 - **网关**：使用 [Nginx](http://localhost:80) 进行反向代理
 
@@ -35,7 +33,7 @@
 
 ### 后端架构
 
-后端基于 Tars 微服务框架，使用 Gin 框架搭建 API Gateway 作为统一入口，负责路由分发、参数校验与统一鉴权。系统通过 Nginx 实现多实例网关的负载均衡与高可用部署。
+后端基于 Tars 微服务框架，使用 TarsGateway 作为 API 网关，提供统一的 HTTP 接口。TarsGateway 负责请求路由、负载均衡、限流熔断等功能。系统通过 Tars 框架实现服务注册发现、监控管理等功能。
 
 ### 底层服务
 
@@ -153,12 +151,18 @@ graph TB
         A2[管理后台]
     end
     
+    subgraph Gateway [网关层]
+        G1[TarsGateway]
+        G2[Tars Registry]
+    end
+    
     subgraph Backend [后端服务层]
-        B1[API网关]
-        B2[认证服务]
-        B3[文章服务]
-        B4[评论服务]
-        B5[搜索服务]
+        B1[博客服务 BlogServer]
+        B2[用户服务 UserService]
+        B3[文章服务 ArticleService]
+        B4[分类服务 CategoryService]
+        B5[标签服务 TagService]
+        B6[评论服务 CommentService]
     end
     
     subgraph Data [数据存储层]
@@ -167,19 +171,23 @@ graph TB
         C3[Elasticsearch - 搜索索引]
     end
     
-    A1 --> B1
-    A2 --> B1
+    A1 --> G1
+    A2 --> G1
+    G1 --> G2
+    G2 --> B1
     B1 --> B2
     B1 --> B3
     B1 --> B4
     B1 --> B5
+    B1 --> B6
     B2 --> C1
     B2 --> C2
     B3 --> C1
     B3 --> C2
     B3 --> C3
     B4 --> C1
-    B5 --> C3
+    B5 --> C1
+    B6 --> C1
 ```
 
 ### 流程图

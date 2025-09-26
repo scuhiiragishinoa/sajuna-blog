@@ -10,6 +10,7 @@ type Article struct {
 	Title       string         `json:"title" gorm:"size:200;not null"`
 	Slug        string         `json:"slug" gorm:"uniqueIndex;size:200;not null"`
 	Content     string         `json:"content" gorm:"type:longtext;not null"`
+	Summary     string         `json:"summary" gorm:"type:text"`
 	Excerpt     string         `json:"excerpt" gorm:"type:text"`
 	CoverImage  string         `json:"cover_image" gorm:"size:255"`
 	Status      string         `json:"status" gorm:"size:20;default:'draft'"` // draft, published, archived
@@ -30,6 +31,17 @@ type Article struct {
 	Category  Category   `json:"category,omitempty" gorm:"foreignKey:CategoryID"`
 	Tags      []Tag      `json:"tags,omitempty" gorm:"many2many:article_tags;"`
 	Comments  []Comment  `json:"comments,omitempty" gorm:"foreignKey:ArticleID"`
+}
+
+// ArticleTag 文章标签关联表
+type ArticleTag struct {
+	ID        uint64 `json:"id" gorm:"primaryKey;autoIncrement"`
+	ArticleID uint64 `json:"article_id" gorm:"not null"`
+	TagID     uint64 `json:"tag_id" gorm:"not null"`
+	
+	// 关联
+	Article Article `json:"article,omitempty" gorm:"foreignKey:ArticleID"`
+	Tag     Tag     `json:"tag,omitempty" gorm:"foreignKey:TagID"`
 }
 
 
