@@ -1,12 +1,13 @@
 # Sajuna Blog 开发文档
 
-**2025年9月25日**
+**2025年9月25日** - 0.0.0
+**2025年10月10日** - 0.0.1
 
 ---
 
 ## 一、项目概述
 
-本项目是一个个人博客项目，旨在构建一个个人 Web 站点，采用现代化的开发流程进行项目构建。同时，在 AI Coding 的帮助下拓展对不同技术栈的了解。
+本项目是一个个人博客项目，旨在构建一个个人 Web 站点，采用现代化的开发流程进行项目构建。
 
 ## 二、部署说明
 
@@ -24,7 +25,7 @@
 | 技术栈 | 说明 |
 |--------|------|
 | Vue 3 | 采用 Composition API 提升组件复用性与逻辑组织能力 |
-| Vuex 4.x | 全局状态管理 |
+| Pinia | 全局状态管理 |
 | Vue Router 4.x | 实现灵活的页面路由控制 |
 | Element Plus UI 组件库 | 丰富的 UI 组件支持 |
 | Sass/SCSS 预处理器 | 增强 CSS 开发能力 |
@@ -45,6 +46,142 @@
 - **Kafka**：作为消息队列支撑 Chatservice 的高并发消息分发，保证即时通讯稳定性与可扩展性
 
 整体系统具备良好的模块解耦、水平扩展与高可用能力，可支持用户规模增长下的稳定运行，满足知识管理平台在实际应用中的业务需求。
+
+### 环境搭建
+
+#### Docker 部署
+
+##### 1. 安装 Docker Desktop
+
+**版本要求：**
+- **Docker Desktop**: ≥ 28.4.0
+- **Docker Engine**: ≥ 27.0.0
+- **Docker Compose**: ≥ v2.28.0
+
+**Windows 安装：**
+```powershell
+# 1. 下载 Docker Desktop for Windows (https://www.docker.com/products/docker-desktop/)
+
+# 2. 启用 WSL 2（如果还未启用）
+wsl --install
+
+# 3. 重启电脑后，安装 Docker Desktop
+# 双击安装包，按提示安装
+
+# 4. 验证安装
+docker --version
+# 输出：Docker version 27.x.x, build xxx
+
+docker compose version
+# 输出：Docker Compose version v2.28.x
+```
+
+**macOS 安装：**
+```bash
+# 下载 Docker Desktop for Mac
+# Intel 芯片：https://desktop.docker.com/mac/main/amd64/Docker.dmg
+# Apple 芯片：https://desktop.docker.com/mac/main/arm64/Docker.dmg
+
+# 验证安装
+docker --version
+docker compose version
+```
+
+**Linux (Ubuntu/Debian) 安装：**
+```bash
+# 更新包索引
+sudo apt-get update
+
+# 安装依赖
+sudo apt-get install -y \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release
+
+# 添加 Docker 官方 GPG 密钥
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
+    sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+# 设置仓库
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+  https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# 安装 Docker Engine 和 Docker Compose
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
+# 启动 Docker 服务
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# 验证安装
+docker --version
+docker compose version
+```
+
+##### 2. 启动项目
+
+```bash
+# 克隆项目
+git clone https://github.com/scuhiiragishinoa/sajunaBlog.git
+cd sajunaBlog
+
+# 配置环境变量（可选）
+cp .env.example .env
+# 编辑 .env 文件修改默认配置
+
+# 一键启动所有服务
+docker compose up -d
+
+# 查看服务状态
+docker compose ps
+
+# 查看日志
+docker compose logs -f
+
+# 停止服务
+docker compose down
+
+# 停止并清除数据
+docker compose down -v
+```
+
+##### 3. 访问应用
+
+| 服务 | 地址 | 说明 |
+|-----|------|------|
+| **前端** | http://localhost:3000 | 博客主页 |
+| **后端 API** | http://localhost:8080 | TarsGateway API 网关 |
+| **Tars Registry** | http://localhost:17890 | Tars 注册中心 |
+| **MySQL** | localhost:3306 | 数据库 |
+| **Redis** | localhost:6379 | 缓存服务 |
+
+#### 环境版本总结
+
+**Docker 部署：**
+| 组件 | 版本 | 说明 |
+|------|------|------|
+| Docker Desktop | ≥ 28.4.0 | 容器平台 |
+| Docker Engine | ≥ 27.0.0 | Docker 引擎 |
+| Docker Compose | ≥ v2.28.0 | 容器编排工具 |
+
+
+**容器镜像版本（docker-compose.yml）：**
+| 服务 | 镜像 | 版本 |
+|------|------|------|
+| MySQL | mysql | 8.0 |
+| Redis | redis | 7-alpine |
+| Tars | tarscloud/tars | latest |
+| Node.js (构建) | node | 20-alpine |
+| Nginx | nginx | alpine |
+| Go (构建) | golang | 1.23-alpine |
+
+---
 
 ## 三、需求描述
 
@@ -105,15 +242,17 @@
 ### 非功能需求
 
 *   **N1: 性能**
-    *   **页面加载速度**： 首屏加载时间应小于 1.5 秒（基于 Lighthouse 评分标准）。
+    *   **页面加载速度**： 首屏加载时间应小于 1.5 秒（基于 Lighthouse 评分标准）。（路由懒加载/图片懒加载/列表过长时的虚拟滚动）
     *   **API 响应速度**： 95% 的 API 请求响应时间应在 100ms 以内。
     *   **并发支持**： 应能支持至少 50 个并发用户同时浏览（对于个人博客完全足够）。
 
 *   **N2: 安全性**
-    *   **后端**： 防止 SQL 注入、XSS 攻击、CSRF 攻击等常见 Web 安全威胁。
+    *   **后端**： 防止 SQL 注入、XSS 攻击（例如使用DOMPurify清洗Markdown渲染后的HTML）、CSRF 攻击等常见 Web 安全威胁。
     *   **认证**： 用户密码需加盐哈希存储（bcrypt）。JWT Token 应有合理的过期时间（20min）。
     *   **权限**： 前后端均需对管理接口进行鉴权，未登录用户无法访问管理端功能。
     *   **输入验证**： 前后端均需对用户输入进行严格校验，优先使用白名单策略。
+    *   **API限流策略**： 基于IP的限流，限制同一IP进行远超人类的接口访问次数。
+    *   **敏感词过滤**： 评论系统集成敏感词库。
 
 *   **N3: 可用性**
     *   **前端**： 界面设计简洁、直观，导航清晰。支持响应式布局，在手机、平板、桌面设备上均有良好体验。
@@ -121,11 +260,19 @@
 
 *   **N4: 可靠性**
     *   **系统可用性**： 目标 99.9% 的可用性。
-    *   **数据持久性**： 确保文章、评论等核心数据不丢失
+    *   **数据持久性**： 确保文章、评论等核心数据不丢失。
+    *   **数据备份**： 定期同步云存储。
 
 *   **N5: 可维护性与可扩展性**
     *   **代码质量**： 代码结构清晰，注释完备，遵循编程规范。
     *   **模块化**： 前后端均采用模块化/组件化设计，便于后续功能扩展（如新增“友链”页面、图床功能等）。
+
+*   **N6: 用户体验**
+    *   **骨架屏**：文章加载时显示占位符。
+    *   **返回顶部按钮**：长文章阅读体验优化。
+    *   **阅读进度条**：显示文章阅读百分比。
+    *   **暗黑模式**：支持系统主题切换。
+    *   **国际化**：支持显示语言切换。
 
 #### 5. 内容管理需求
 
@@ -136,9 +283,9 @@
 
 | 优先级 | 需求 | 说明 |
 | :--- | :--- | :--- |
-| **P0 (必须实现)** | 访客：文章浏览、列表、详情<br>博主：登录、文章CRUD、分类标签管理 | 构成博客最核心的功能。 |
-| **P1 (应该实现)** | 访客：搜索、评论<br>博主：评论管理、Markdown编辑器 | 提升博客的可用性和互动性，是完整博客体验的关键。 |
-| **P2 (可以实现)** | 系统仪表盘、评论回复通知、文章草稿自动保存、友情链接页面 | 在核心功能稳定后迭代增加。 |
+| **P0 (必须实现)** | 访客：文章浏览、列表、详情<br>博主：登录、文章CRUD、Markdown编辑器、分类标签管理 | 构成博客最核心的功能。 |
+| **P1 (应该实现)** | 访客：搜索功能、评论<br>博主：评论系统、用户认证 | 提升博客的可用性和互动性，是完整博客体验的关键。 |
+| **P2 (可以实现)** | 系统仪表盘（数据统计）、评论回复通知、文章草稿自动保存、SEO优化、RSS订阅、语言国际化 | 在核心功能稳定后迭代增加。 |
 
 ## 四、模块和关系
 
