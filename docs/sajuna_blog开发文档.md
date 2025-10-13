@@ -1,7 +1,5 @@
 # Sajuna Blog 开发文档
-
-**2025年9月25日** - 0.0.0
-**2025年10月10日** - 0.0.1
+**2025年10月13日** - 0.0.2
 
 ---
 
@@ -74,54 +72,6 @@ docker --version
 
 docker compose version
 # 输出：Docker Compose version v2.28.x
-```
-
-**macOS 安装：**
-```bash
-# 下载 Docker Desktop for Mac
-# Intel 芯片：https://desktop.docker.com/mac/main/amd64/Docker.dmg
-# Apple 芯片：https://desktop.docker.com/mac/main/arm64/Docker.dmg
-
-# 验证安装
-docker --version
-docker compose version
-```
-
-**Linux (Ubuntu/Debian) 安装：**
-```bash
-# 更新包索引
-sudo apt-get update
-
-# 安装依赖
-sudo apt-get install -y \
-    ca-certificates \
-    curl \
-    gnupg \
-    lsb-release
-
-# 添加 Docker 官方 GPG 密钥
-sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
-    sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-
-# 设置仓库
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
-  https://download.docker.com/linux/ubuntu \
-  $(lsb_release -cs) stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-# 安装 Docker Engine 和 Docker Compose
-sudo apt-get update
-sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
-
-# 启动 Docker 服务
-sudo systemctl start docker
-sudo systemctl enable docker
-
-# 验证安装
-docker --version
-docker compose version
 ```
 
 ##### 2. 启动项目
