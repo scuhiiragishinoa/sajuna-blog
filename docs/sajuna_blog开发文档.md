@@ -126,8 +126,8 @@ docker compose down -v
 |------|------|------|
 | MySQL | mysql | 8.0 |
 | Redis | redis | 7-alpine |
-| Tars | tarscloud/tars | latest |
-| Node.js (构建) | node | 20-alpine |
+| Tars | tarscloud/tars | v3.0.20 |
+| Node.js (构建) | node | 22.20.0 LTS |
 | Nginx | nginx | alpine |
 | Go (构建) | golang | 1.23-alpine |
 
@@ -211,7 +211,6 @@ docker compose down -v
 *   **N4: 可靠性**
     *   **系统可用性**： 目标 99.9% 的可用性。
     *   **数据持久性**： 确保文章、评论等核心数据不丢失。
-    *   **数据备份**： 定期同步云存储。
 
 *   **N5: 可维护性与可扩展性**
     *   **代码质量**： 代码结构清晰，注释完备，遵循编程规范。

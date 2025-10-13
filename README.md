@@ -48,8 +48,8 @@
 
 | 技术 | 版本 | 说明 |
 |------|------|------|
-| Go | 1.23+ | 高性能编程语言 |
-| Tars | latest | 腾讯开源微服务框架 |
+| Go | 1.23-alpine | 高性能编程语言 |
+| Tars | v3.0.20 | 腾讯开源微服务框架 |
 | GORM | 1.25+ | Go ORM 库 |
 | JWT | v5.2.0 | JSON Web Token |
 | Viper | 1.17+ | 配置管理 |
@@ -199,7 +199,7 @@ graph TB
 
 ### 环境要求
 
-- Node.js ≥ 20.11.0 LTS
+- Node.js ≥ 22.20.0 LTS
 - Go ≥ 1.23.0
 - MySQL ≥ 8.0
 - Redis ≥ 7.0

@@ -6,8 +6,8 @@
 env.dev
 env.prod
 
-# Docker Compose 覆盖文件（包含敏感信息）
-docker-compose.override.yml
+# Docker Compose 文件（包含敏感信息）
+docker-compose.yml
 
 # 日志文件
 *.log
