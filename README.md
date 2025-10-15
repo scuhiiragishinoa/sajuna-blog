@@ -77,45 +77,64 @@ sajunaBlog/
 ├── frontend/                 # 前端项目
 │   ├── src/
 │   │   ├── api/             # API 接口
+│   │   ├── assets/          # 静态资源
 │   │   ├── components/      # 公共组件
+│   │   ├── composables/     # Vue 组合式函数
+│   │   ├── layouts/         # 布局组件
 │   │   ├── views/           # 页面组件
+|   |   |   ├── App.vue
+|   |   |   └── main.ts          
 │   │   ├── router/          # 路由配置
 │   │   ├── stores/          # Pinia 状态管理
+│   │   ├── utils/           # 工具函数
 │   │   └── styles/          # 全局样式
+│   ├── public/              # 公共静态资源
 │   ├── Dockerfile           # 前端 Docker 配置
-│   └── package.json         # 前端依赖
+│   ├── .dockerignore
+|   ├── index.html
+|   ├── vite.config.ts
+│   └── package.json         
 │
-├── backend/                  # 后端项目
-│   ├── api/                 # Tars IDL 定义
-│   ├── cmd/                 # 主程序入口
-│   │   └── blog_server/
-│   ├── internal/            # 内部包
+├── backend/                # 后端项目
+│   ├── api/                # Tars IDL 定义
+│   ├── cmd/                # 主程序入口
+│   │   └── server/
+│   ├── internal/           # 内部包
 │   │   ├── config/         # 配置管理
-│   │   ├── database/       # 数据库连接
+│   │   ├── handler/        # HTTP 处理器
+│   │   ├── middleware/     # 中间件
 │   │   ├── model/          # 数据模型
-│   │   ├── service/        # 业务逻辑
-│   │   └── utils/          # 工具函数
-│   ├── configs/            # 配置文件
-│   ├── Dockerfile          # 后端 Docker 配置
-│   └── go.mod              # Go 依赖
+│   │   └── service/        # 业务逻辑
+│   ├── pkg/                # 可公开的包
+│   │   ├── database/       # 数据库连接
+│   │   ├── utils/          # 工具函数
+│   │   └── logger/         # 日志处理
+│   ├── migrations/         # 数据库迁移脚本
+│   ├── Dockerfile
+|   ├── .air.toml
+│   └── go.mod
 │
-├── configs/                 # 全局配置
-│   ├── init.sql            # 数据库初始化脚本
-│   └── tars-gateway.conf   # Tars 网关配置
+├── docker/                 # docker配置
+│   ├── mysql/
+|   |   ├── init.sql
+│   │   └── my.cnf           # MySQL 配置
+|   ├── nginx/
+|   |   ├── conf.d/
+|   |   |   └── default.conf
+|   |   └── nginx.conf
+|   ├── redis/
+|   |   └── redis.conf
+│   └── tars/
+|       └── tars.conf
 │
-├── docs/                    # 项目文档
-│   ├── sajuna_blog开发文档.md
-│   ├── API文档.md
-│   ├── Tars架构说明.md
-│   └── 项目结构说明.md
+├── docs/  
+│   └── sajuna_blog开发文档.md
 │
-├── scripts/                 # 脚本工具
-│   ├── sajuna-blog.bat     # Windows 启动脚本
-│   └── db-connect.bat      # 数据库连接脚本
-│
-├── docker-compose.yml       # Docker Compose 配置
-├── .gitignore              # Git 忽略文件
-└── README.md               # 项目说明（本文件）
+├── docker-compose.yml
+├── .env
+├── .gitignore
+├── .dockerignore
+└── README.md
 ```
 
 ---
