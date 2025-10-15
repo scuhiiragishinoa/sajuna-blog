@@ -1,0 +1,10 @@
+# 测试脚本
+*_test.sh
+test_*
+
+# 开发脚本
+dev_*
+local_*
+
+# 备份
+*.bak
