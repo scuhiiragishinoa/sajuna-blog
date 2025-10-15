@@ -3,17 +3,23 @@ FROM node:20-alpine AS deps
 
 WORKDIR /app
 
+# 配置 Alpine 镜像源和 npm 镜像源
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories && \
+    npm config set registry https://registry.npmmirror.com
+
 # 复制包管理文件
 COPY package.json package-lock.json* ./
 
-# 如果 package-lock.json 不存在，使用 npm install
-RUN if [ -f package-lock.json ]; then npm ci --only=production; else npm install --only=production; fi && \
-    npm cache clean --force
+# 清理 npm 缓存并安装依赖
+RUN npm ci --only=production && npm cache clean --force
 
 # 构建阶段
 FROM node:20-alpine AS builder
 
 WORKDIR /app
+
+# 配置 npm 镜像源
+RUN npm config set registry https://registry.npmmirror.com
 
 # 从 deps 阶段复制 node_modules
 COPY --from=deps /app/node_modules ./node_modules
@@ -30,8 +36,9 @@ RUN npm run build
 # 生产环境
 FROM nginx:alpine AS production
 
-# 安装 curl 用于健康检查
-RUN apk add --no-cache curl
+# 配置 Alpine 镜像源并安装 curl
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories && \
+    apk update && apk add --no-cache curl
 
 # 复制构建产物
 COPY --from=builder /app/dist /usr/share/nginx/html
@@ -41,8 +48,7 @@ COPY docker/nginx/nginx.conf /etc/nginx/nginx.conf
 COPY docker/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
 
 # 设置权限
-RUN chown -R nginx:nginx /usr/share/nginx/html && \
-    chmod -R 755 /usr/share/nginx/html
+RUN chown -R nginx:nginx /usr/share/nginx/html && chmod -R 755 /usr/share/nginx/html
 
 # 暴露端口
 EXPOSE 80
@@ -59,11 +65,14 @@ FROM node:20-alpine AS development
 
 WORKDIR /app
 
+# 配置 npm 镜像源
+RUN npm config set registry https://registry.npmmirror.com
+
 # 复制包管理文件
 COPY package.json package-lock.json* ./
 
 # 安装所有依赖（包括开发依赖）
-RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
+RUN npm ci
 
 # 复制源代码
 COPY . .
