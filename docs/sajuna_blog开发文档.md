@@ -129,7 +129,7 @@ docker compose down -v
 | Tars | tarscloud/tars | v3.0.20 |
 | Node.js (构建) | node | 22.20.0 LTS |
 | Nginx | nginx | alpine |
-| Go (构建) | golang | 1.23-alpine |
+| Go (构建) | golang | 1.25.1 |
 
 ---
 

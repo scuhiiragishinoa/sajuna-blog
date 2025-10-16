@@ -1,5 +1,5 @@
 # 依赖安装阶段
-FROM node:20-alpine AS deps
+FROM node:24-alpine AS deps
 
 WORKDIR /app
 
@@ -11,10 +11,10 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositorie
 COPY package.json package-lock.json* ./
 
 # 清理 npm 缓存并安装依赖
-RUN npm ci --only=production && npm cache clean --force
+RUN npm install --only=production && npm cache clean --force
 
 # 构建阶段
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
@@ -61,7 +61,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 CMD ["nginx", "-g", "daemon off;"]
 
 # 开发环境
-FROM node:20-alpine AS development
+FROM node:24-alpine AS development
 
 WORKDIR /app
 
@@ -72,7 +72,7 @@ RUN npm config set registry https://registry.npmmirror.com
 COPY package.json package-lock.json* ./
 
 # 安装所有依赖（包括开发依赖）
-RUN npm ci
+RUN npm install
 
 # 复制源代码
 COPY . .

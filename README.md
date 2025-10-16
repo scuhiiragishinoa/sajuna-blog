@@ -5,7 +5,7 @@
 ![Version](https://img.shields.io/badge/version-0.0.1-blue.svg)
 ![Docker](https://img.shields.io/badge/docker-≥28.4.0-2496ED.svg)
 ![Node](https://img.shields.io/badge/node-≥20.11.0-339933.svg)
-![Go](https://img.shields.io/badge/go-≥1.23.0-00ADD8.svg)
+![Go](https://img.shields.io/badge/go-≥1.25-00ADD8.svg)
 
 基于 **Vue3 + Go + Tars 微服务** 的个人博客系统
 
@@ -17,7 +17,7 @@
 
 ## ✨ 特性
 
-- 🚀 **现代化技术栈** - Vue3 + Composition API + TypeScript + Go 1.23
+- 🚀 **现代化技术栈** - Vue3 + Composition API + TypeScript + Go 1.25
 - 🏗️ **微服务架构** - 基于 Tars 框架的分布式微服务设计
 - 🎨 **响应式设计** - 完美适配桌面端、平板、移动端
 - 🐳 **容器化部署** - Docker Compose 一键启动，开箱即用
@@ -48,7 +48,7 @@
 
 | 技术 | 版本 | 说明 |
 |------|------|------|
-| Go | 1.23-alpine | 高性能编程语言 |
+| Go | 1.25-alpine | 高性能编程语言 |
 | Tars | v3.0.20 | 腾讯开源微服务框架 |
 | GORM | 1.25+ | Go ORM 库 |
 | JWT | v5.2.0 | JSON Web Token |
@@ -112,6 +112,7 @@ sajunaBlog/
 │   ├── migrations/         # 数据库迁移脚本
 │   ├── Dockerfile
 |   ├── .air.toml
+|   ├── go.sum
 │   └── go.mod
 │
 ├── docker/                 # docker配置
@@ -218,8 +219,8 @@ graph TB
 
 ### 环境要求
 
-- Node.js ≥ 22.20.0 LTS
-- Go ≥ 1.23.0
+- Node.js ≥ 20-alpine
+- Go ≥ 1.25.1
 - MySQL ≥ 8.0
 - Redis ≥ 7.0
 

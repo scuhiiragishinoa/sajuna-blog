@@ -1,5 +1,5 @@
 # 开发环境 - 使用稳定版本并配置镜像源
-FROM golang:1.21-alpine AS development
+FROM golang:1.25 AS development
 
 WORKDIR /app
 
@@ -38,7 +38,7 @@ ENV GO_ENV=development
 CMD ["air", "-c", ".air.toml"]
 
 # 构建环境
-FROM golang:1.21-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
