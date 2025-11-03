@@ -340,671 +340,274 @@ POST   /admin/reports/{report_id}/handle // 处理举报
 | 开发复杂度 | 微服务架构、事件驱动、AI集成等引入了较高的技术复杂度和维护成本。 | 1. 领域驱动设计(DDD)：确保服务边界清晰。<br>2. 标准化：统一API契约（OpenAPI）、日志格式和监控指标。<br>3. 自动化：建立完善的CI/CD流水线和自动化测试，确保交付质量。 |
 
 
-## 四、模块和关系
+### 四、模块关系
 
-### 博客系统整体架构图
+#### 4.1 架构总览
 
-```mermaid
-graph TB
-    subgraph Frontend [前端展示层]
-        A1[访客界面]
-        A2[管理后台]
-    end
-    
-    subgraph Gateway [网关层]
-        G1[TarsGateway]
-        G2[Tars Registry]
-    end
-    
-    subgraph Backend [后端服务层]
-        B1[博客服务 BlogServer]
-        B2[用户服务 UserService]
-        B3[文章服务 ArticleService]
-        B4[分类服务 CategoryService]
-        B5[标签服务 TagService]
-        B6[评论服务 CommentService]
-    end
-    
-    subgraph Data [数据存储层]
-        C1[MySQL - 文章/用户数据]
-        C2[Redis - 缓存/会话]
-        C3[Elasticsearch - 搜索索引]
-    end
-    
-    A1 --> G1
-    A2 --> G1
-    G1 --> G2
-    G2 --> B1
-    B1 --> B2
-    B1 --> B3
-    B1 --> B4
-    B1 --> B5
-    B1 --> B6
-    B2 --> C1
-    B2 --> C2
-    B3 --> C1
-    B3 --> C2
-    B3 --> C3
-    B4 --> C1
-    B5 --> C1
-    B6 --> C1
-```
+本社区平台采用现代化的前后端分离与微服务架构，旨在实现高内聚、低耦合、高可用的系统目标，以应对复杂的业务场景和未来的高并发挑战。
 
-### 流程图
+*   前端 (Frontend): 采用 Vue3 技术栈构建单页应用 (SPA)，包括面向用户的主应用和独立的管理后台应用。两者通过响应式设计，适配PC、平板和移动设备。
+*   后端 (Backend): 采用 Go语言 构建一系列专注于单一领域职责的微服务。服务间通信通过轻量级的gRPC或RESTful API进行，并通过服务注册与发现机制进行解耦。
+*   API网关 (API Gateway): 作为系统的唯一入口，负责请求路由、身份认证、速率限制、日志聚合和协议转换，为前端提供统一、安全的API接口。
+*   数据存储 (Data Persistence): 采用混合持久化策略。
+    *   MySQL 8.0: 作为主关系型数据库，存储用户、内容、关系等核心业务数据，通过读写分离保证性能。
+    *   Redis: 用于热点数据缓存（如热榜、用户信息）、分布式会话管理和简单消息队列。
+    *   Elasticsearch: 提供强大的全文检索能力，支撑全局搜索功能。
+    *   向量数据库 (e.g., Milvus / PGVector): 存储文本内容的向量嵌入，用于AI知识库的语义检索。
+    *   对象存储 (e.g., MinIO / S3): 存储用户上传的图片、附件等非结构化数据。
+*   消息队列 (Message Queue): 采用 RabbitMQ 或 Kafka，用于服务间的异步通信、事件驱动任务（如发帖后通知、Feed流扇出）和任务削峰填谷，提升系统响应速度和可靠性。
 
-#### 访客浏览文章流程
+---
+
+#### 4.2 C4模型：系统组件图
+
+下图基于C4模型中的组件图（Component Diagram），宏观展示了系统内部各微服务模块、外部依赖以及它们之间的交互关系。
 
 ```mermaid
-flowchart TD
-    A([访客访问博客]) --> B{访问路径}
-    
-    B --> |直接访问首页| C[加载首页]
-    B --> |搜索引擎进入| D[加载文章详情页]
-    B --> |访问分类页面| E[加载分类文章列表]
-    B --> |使用搜索功能| F[显示搜索页面]
-    
-    C --> G[展示博主简介]
-    C --> H[显示最新文章列表]
-    C --> I[显示热门文章推荐]
-    C --> J[显示文章分类导航]
-    
-    E --> K[根据分类筛选文章]
-    F --> L[输入关键词搜索]
-    L --> M[显示搜索结果列表]
-    
-    G --> N{用户操作}
-    H --> N
-    I --> N
-    J --> N
-    K --> N
-    M --> N
-    
-    N --> |点击阅读文章| O[加载文章详情页]
-    N --> |浏览其他页面| P[跳转到对应页面]
-    N --> |离开网站| Q([结束访问])
-    
-    O --> R[显示文章标题/元信息]
-    O --> S[渲染Markdown内容]
-    O --> T[显示代码高亮]
-    O --> U[加载评论区域]
-    
-    U --> V{是否发表评论}
-    V --> |是| W[输入评论内容]
-    V --> |否| X([继续浏览])
-    
-    W --> Y[提交评论]
-    Y --> Z[验证评论内容]
-    Z --> AA[保存评论到数据库]
-    AA --> AB[显示评论成功]
-    AB --> X
-```
+C4Context
+  title 校园BBS社区平台 - 系统组件图
 
-#### 管理员文章CRUD操作流程
+  Person_Ext(guest, "访客")
+  Person_Ext(user, "普通用户")
+  Person_Ext(moderator, "版主")
+  Person_Ext(admin, "管理员")
 
-```mermaid
-flowchart TD
-    Start([管理员登录]) --> Auth[身份验证]
-    Auth --> Dashboard[进入管理仪表盘]
-    
-    Dashboard --> Menu{选择操作菜单}
-    
-    Menu --> |文章管理| ArticleList
-    Menu --> |写新文章| NewArticle
-    Menu --> |分类管理| CategoryManage
-    Menu --> |评论管理| CommentManage
-    
-    subgraph ArticleList [文章列表管理]
-        AL1[加载文章列表] --> AL2{选择操作}
-        AL2 --> |编辑| AL3[进入编辑模式]
-        AL2 --> |删除| AL4[确认删除操作]
-        AL2 --> |查看| AL5[预览文章效果]
-        AL3 --> AL6[更新文章内容]
-        AL4 --> AL7[软删除文章]
-        AL6 --> AL8[返回文章列表]
-        AL7 --> AL8
-        AL5 --> AL8
-    end
-    
-    subgraph NewArticle [创建新文章]
-        NA1[打开Markdown编辑器] --> NA2[编写文章标题]
-        NA2 --> NA3[编写文章内容]
-        NA3 --> NA4[设置文章摘要]
-        NA4 --> NA5[选择文章分类]
-        NA5 --> NA6[添加文章标签]
-        NA6 --> NA7[上传图片文件]
-        NA7 --> NA8[实时预览效果]
-        NA8 --> NA9{保存选项}
-        NA9 --> |存为草稿| NA10[保存为草稿]
-        NA9 --> |立即发布| NA11[发布文章]
-        NA10 --> NA12[返回文章列表]
-        NA11 --> NA12
-    end
-    
-    subgraph CategoryManage [分类管理]
-        CM1[查看分类列表] --> CM2{操作选择}
-        CM2 --> |新增分类| CM3[输入分类信息]
-        CM2 --> |编辑分类| CM4[修改分类信息]
-        CM2 --> |删除分类| CM5[确认删除]
-        CM3 --> CM6[保存分类]
-        CM4 --> CM6
-        CM5 --> CM7[删除分类]
-        CM6 --> CM8[刷新分类列表]
-        CM7 --> CM8
-    end
-    
-    AL8 --> Dashboard
-    NA12 --> Dashboard
-    CM8 --> Dashboard
-```
+  System_Ext(sso, "校园统一身份认证(SSO)", "OAuth2/CAS Provider")
+  System_Ext(ai_service, "AI大语言模型服务", "提供文本摘要、向量化能力")
+  System_Ext(object_storage, "对象存储 (S3/MinIO)", "存储图片、附件等静态文件")
 
-#### 评论系统流程
+  System_Boundary(bbs_system, "BBS社区平台") {
 
-```mermaid
-flowchart TD
-    A[用户访问文章] --> B[加载文章内容]
-    B --> C[显示评论区域]
-    C --> D[加载现有评论列表]
-    
-    D --> E{显示排序}
-    E -->|默认排序| F[按时间倒序显示]
-    E -->|置顶优先| G[置顶评论显示在最前]
-    
-    F --> H{用户身份}
-    G --> H
-    
-    H -->|访客| I[显示评论输入框]
-    H -->|博主| J[显示评论输入框+管理工具]
-    
-    I --> K{用户操作}
-    J --> K
-    
-    K -->|发表新评论| L
-    K -->|回复评论| M
-    K -->|管理评论| N
-    
-    subgraph L[发表一级评论流程]
-        L1[填写评论信息] --> L2[提交评论]
-        L2 --> L3[前端验证]
-        L3 --> L4[调用评论API]
-        L4 --> L5[保存一级评论]
-        L5 --> L6[刷新评论列表]
-    end
-    
-    subgraph M[回复评论流程（二级评论）]
-        M1[点击回复按钮] --> M2[显示回复输入框]
-        M2 --> M3[输入回复内容]
-        M3 --> M4[提交回复]
-        M4 --> M5[前端验证]
-        M5 --> M6[调用回复API]
-        M6 --> M7[保存二级评论]
-        M7 --> M8[更新评论树显示]
-    end
-    
-    subgraph N[博主管理操作]
-        N1[显示管理选项] --> N2{选择操作}
-        N2 -->|置顶评论| N3[设置一级评论置顶]
-        N2 -->|取消置顶| N4[取消置顶状态]
-        N2 -->|编辑评论| N5[修改评论内容]
-        N2 -->|删除评论| N6[确认删除操作]
-        
-        N3 --> N7[更新置顶状态]
-        N4 --> N7
-        N5 --> N8[保存编辑内容]
-        N6 --> N9[软删除评论]
-        
-        N7 --> N10[刷新评论显示]
-        N8 --> N10
-        N9 --> N10
-    end
-    
-    L6 --> O[显示评论成功]
-    M8 --> O
-    N10 --> O
-    
-    O --> P[发送通知]
-    P --> Q{通知类型}
-    
-    Q -->|回复博主评论| R[通知博主]
-    Q -->|回复访客评论| S[通知被回复者]
-    Q -->|新评论| T[通知博主有新评论]
-    
-    R --> U[更新通知中心]
-    S --> U
-    T --> U
-    
-    U --> V[完成评论操作]
-    V --> W[继续浏览]
-    
-    W --> A
-```
+    Component(spa, "Web前端应用 (Vue3 SPA)", "JavaScript", "提供用户交互界面")
+    Component(admin_ui, "管理后台前端 (Vue3 SPA)", "JavaScript", "提供给版主和管理员的管理界面")
 
-#### 搜索功能流程
+    Component(api_gateway, "API网关", "Go", "请求路由, 认证, 限流, 日志")
 
-```mermaid
-flowchart TD
-    A([用户进入博客]) --> B[显示搜索入口]
-    B --> C{用户操作}
-    
-    C --> |点击搜索图标| D[展开搜索框]
-    C --> |直接浏览| E([正常浏览])
-    
-    D --> F[输入关键词]
-    F --> G{输入状态}
-    
-    G --> |实时搜索| H[显示实时建议]
-    G --> |按回车搜索| I[执行搜索请求]
-    
-    H --> J[显示匹配结果]
-    J --> K{选择结果}
-    K --> |点击建议| L[跳转到文章]
-    K --> |继续输入| F
-    
-    I --> M[显示加载状态]
-    M --> N[向后端发送请求]
-    N --> O[搜索索引查询]
-    O --> P[返回搜索结果]
-    P --> Q[渲染结果页面]
-    
-    Q --> R{搜索结果}
-    R --> |有结果| S[显示文章列表]
-    R --> |无结果| T[显示无结果提示]
-    
-    S --> U[分页显示]
-    U --> V{用户操作}
-    V --> |点击文章| W[跳转文章详情]
-    V --> |修改搜索| F
-    V --> |重新搜索| I
-    
-    T --> X[显示相关建议]
-    X --> F
-    
-    W --> Y([阅读文章])
-    L --> Y
-```
-
-#### 用户鉴权流程
-
-```mermaid
-flowchart TD
-    A([用户访问]) --> B{访问页面类型}
-    
-    B --> |公开页面| C[直接展示内容]
-    B --> |管理页面| D[检查认证状态]
-    
-    C --> E([正常浏览])
-    
-    D --> F{登录状态}
-    F --> |已登录| G[验证Token有效性]
-    F --> |未登录| H[跳转到登录页]
-    
-    G --> I{Token验证}
-    I --> |有效| J[加载管理页面]
-    I --> |无效/过期| H
-    
-    H --> K[显示登录表单]
-    K --> L[输入用户名密码]
-    L --> M[提交登录信息]
-    M --> N[后端验证凭证]
-    
-    N --> O{验证结果}
-    O --> |成功| P[生成JWT Token]
-    O --> |失败| Q[显示错误信息]
-    
-    P --> R[返回Token到前端]
-    R --> S[前端存储Token]
-    S --> T[跳转到管理页面]
-    
-    Q --> L
-    
-    J --> U[加载管理功能]
-    U --> V{管理员操作}
-    
-    V --> |文章管理| W[执行CRUD操作]
-    V --> |评论管理| X[管理评论内容]
-    V --> |系统设置| Y[配置博客参数]
-    V --> |退出登录| Z[清除Token]
-    
-    W --> U
-    X --> U
-    Y --> U
-    Z --> E
-```
-
-### 主要功能状态图
-
-#### 文章生命周期状态
-
-```mermaid
-stateDiagram-v2
-    [*] --> Draft : 开始创作
-    Draft --> Saving : 自动保存
-    Saving --> Draft : 保存完成
-    
-    Draft --> Reviewing : 提交审核
-    Reviewing --> Draft : 需要修改
-    Reviewing --> Published : 审核通过
-    
-    Draft --> Published : 直接发布
-    Published --> Updated : 内容更新
-    Updated --> Published : 更新完成
-    
-    Published --> Archived : 归档处理
-    Published --> Deleted : 删除文章
-    Archived --> Published : 重新发布
-    Archived --> Deleted : 最终删除
-    
-    Deleted --> [*]
-    
-    note right of Draft
-        草稿状态：
-        - 可编辑内容
-        - 可设置分类/标签
-        - 支持自动保存
-        - 可预览效果
-    end note
-    
-    note right of Published
-        发布状态：
-        - 对访客可见
-        - 可接收评论
-        - 可被搜索
-        - 可更新内容
-    end note
-```
-
-#### 评论系统状态
-
-```mermaid
-stateDiagram-v2
-    [*] --> Writing : 开始输入
-    Writing --> Submitted : 提交评论
-    Writing --> Canceled : 取消输入
-    
-    Submitted --> Published : 自动审核通过
-    Submitted --> Rejected : 包含屏蔽词
-    Submitted --> Pending : 需要人工审核
-    
-    Pending --> Published : 审核通过
-    Pending --> Rejected : 审核不通过
-    
-    Published --> Pinned : 博主置顶
-    Published --> Replied : 收到回复
-    Published --> Edited : 内容编辑
-    Published --> Deleted : 删除评论
-    
-    Pinned --> Published : 取消置顶
-    Pinned --> Deleted : 删除评论
-    Replied --> Published : 回复完成
-    Edited --> Published : 编辑完成
-    
-    Rejected --> [*]
-    Deleted --> [*]
-    Canceled --> [*]
-```
-
-#### 用户认证状态
-
-```mermaid
-stateDiagram-v2
-    [*] --> Unauthenticated : 访问网站
-    
-    Unauthenticated --> LoggingIn : 点击登录
-    LoggingIn --> Authenticating : 提交凭证
-    Authenticating --> Authenticated : 验证成功
-    Authenticating --> LoginFailed : 验证失败
-    
-    LoginFailed --> LoggingIn : 重新输入
-    LoginFailed --> Unauthenticated : 取消登录
-    
-    Authenticated --> Active : 正常使用
-    Active --> AccessingResource : 访问资源
-    AccessingResource --> Authorized : 权限验证通过
-    AccessingResource --> Unauthorized : 权限不足
-    
-    Authorized --> Active : 操作完成
-    Unauthorized --> Active : 返回主页
-    
-    Authenticated --> TokenRefreshing : Token过期
-    TokenRefreshing --> Authenticated : 刷新成功
-    TokenRefreshing --> Unauthenticated : 刷新失败
-    
-    Authenticated --> LoggingOut : 主动登出
-    LoggingOut --> Unauthenticated : 登出完成
-    
-    note right of Authenticated
-        认证状态：
-        - JWT Token有效
-        - 可访问管理功能
-        - 有操作权限
-    end note
-```
-
-#### 系统运行状态
-
-```mermaid
-stateDiagram-v2
-    [*] --> Initializing : 系统启动
-    Initializing --> Running : 启动完成
-    
-    state Running {
-        [*] --> ServingRequests : 接收请求
-        ServingRequests --> Processing : 处理业务
-        Processing --> DatabaseOps : 数据操作
-        DatabaseOps --> Responding : 返回结果
-        Responding --> ServingRequests : 完成响应
-        
-        ServingRequests --> ErrorHandling : 发生错误
-        ErrorHandling --> ServingRequests : 错误恢复
-        ErrorHandling --> Degraded : 严重错误
+    Component_Boundary(backend, "后端微服务") {
+      Component(user_auth_center, "用户与权限中心", "Go", "用户管理、SSO集成、认证(JWT)、授权(RBAC)")
+      Component(content_module, "内容与版块模块", "Go", "管理版块、主题、回帖、投票、附件")
+      Component(community_module, "社区互动模块", "Go", "点赞、收藏、关注、举报、通知")
+      Component(search_module, "搜索与AI模块", "Go", "全局搜索、AI摘要、知识库")
+      Component(admin_module, "管理后台模块", "Go", "聚合版主与管理员的后台操作API")
     }
-    
-    Running --> Maintaining : 系统维护
-    Maintaining --> Running : 维护完成
-    
-    Running --> Scaling : 负载调整
-    Scaling --> Running : 调整完成
-    
-    Degraded --> Recovering : 故障恢复
-    Recovering --> Running : 恢复完成
-    Degraded --> Stopped : 系统崩溃
-    
-    Stopped --> [*]
+
+    ComponentDb(mysql, "MySQL数据库", "关系型数据库", "存储核心业务数据 (用户、帖子、关系等)")
+    ComponentDb(redis, "Redis缓存", "内存数据库", "缓存热点数据、会话、简单队列")
+    ComponentDb(es, "Elasticsearch", "搜索引擎", "提供全文检索索引")
+    ComponentDb(vector_db, "向量数据库", "Milvus/PGVector", "存储内容向量，用于语义搜索")
+    ComponentDb(mq, "消息队列", "RabbitMQ/Kafka", "处理异步任务和事件流")
+  }
+
+  Rel(guest, spa, "浏览公开内容")
+  Rel(user, spa, "发帖、互动、使用各项功能")
+  Rel(moderator, admin_ui, "管理版块内容")
+  Rel(admin, admin_ui, "管理全站系统")
+
+  Rel(spa, api_gateway, "发起API请求 (HTTPS/JSON)")
+  Rel(admin_ui, api_gateway, "发起管理API请求 (HTTPS/JSON)")
+
+  Rel(api_gateway, user_auth_center, "路由 /auth, /users 等请求")
+  Rel(api_gateway, content_module, "路由 /boards, /threads 等请求")
+  Rel(api_gateway, community_module, "路由 /interact, /notifications 等请求")
+  Rel(api_gateway, search_module, "路由 /search, /kb 等请求")
+  Rel(api_gateway, admin_module, "路由 /admin/* 等请求")
+
+  Rel(user_auth_center, sso, "进行SSO认证")
+  Rel(user_auth_center, mysql, "读/写用户、角色数据")
+  Rel(user_auth_center, redis, "缓存用户信息和会话")
+
+  Rel(content_module, user_auth_center, "验证用户发帖/回帖权限 (gRPC/API)")
+  Rel(content_module, mysql, "读/写版块、帖子、回帖数据")
+  Rel(content_module, mq, "发布'新帖/新回复'事件")
+  Rel(content_module, object_storage, "存/取附件")
+
+  Rel(community_module, user_auth_center, "获取用户信息 (gRPC/API)")
+  Rel(community_module, mysql, "读/写点赞、关注、举报数据")
+  Rel(community_module, mq, "消费'新帖/新回复'事件, 生成通知")
+
+  Rel(search_module, content_module, "同步内容数据 (事件驱动/轮询)")
+  Rel(search_module, es, "创建/更新/查询搜索索引")
+  Rel(search_module, vector_db, "创建/查询内容向量")
+  Rel(search_module, ai_service, "调用API生成摘要和向量")
+
+  Rel(admin_module, user_auth_center, "管理用户、分配角色")
+  Rel(admin_module, content_module, "管理帖子(置顶、加精、删除)")
+  Rel(admin_module, community_module, "处理举报")
+
+  Rel(mq, community_module, "推送通知事件")
 ```
 
-#### 搜索功能状态
+---
 
-```mermaid
-stateDiagram-v2
-    [*] --> Idle : 搜索框空闲
-    
-    Idle --> Inputting : 开始输入
-    Inputting --> Suggesting : 输入关键词
-    Suggesting --> Waiting : 停止输入
-    
-    Waiting --> Searching : 执行搜索(回车/点击)
-    Waiting --> Inputting : 继续输入
-    Waiting --> Idle : 清空输入
-    
-    Searching --> Loading : 发送请求
-    Loading --> ResultsReady : 获取结果
-    ResultsReady --> Displaying : 显示结果
-    
-    Displaying --> BrowsingResults : 浏览结果
-    BrowsingResults --> ViewingDetail : 查看详情
-    ViewingDetail --> BrowsingResults : 返回列表
-    
-    BrowsingResults --> RefiningSearch : 修改搜索条件
-    RefiningSearch --> Searching : 重新搜索
-    BrowsingResults --> Idle : 完成搜索
-    
-    ResultsReady --> NoResults : 无匹配结果
-    NoResults --> RefiningSearch : 调整关键词
-    NoResults --> Idle : 放弃搜索
-    
-    Loading --> Error : 搜索失败
-    Error --> Retrying : 重试搜索
-    Error --> Idle : 取消搜索
-    Retrying --> Loading
-```
+#### 4.3 核心模块详述
 
-#### 文件上传状态
+##### 用户与权限中心 (User & Auth Center)
 
-```mermaid
-stateDiagram-v2
-    [*] --> Ready : 准备上传
-    
-    Ready --> Selecting : 选择文件
-    Selecting --> Validating : 文件选择完成
-    Validating --> Ready : 文件无效
-    Validating --> Uploading : 验证通过
-    
-    Uploading --> Progressing : 开始上传
-    Progressing --> Uploading : 传输中
-    Uploading --> Completed : 上传完成
-    Uploading --> Failed : 上传失败
-    
-    Completed --> Processing : 后端处理
-    Processing --> Stored : 存储完成
-    Processing --> Error : 处理失败
-    
-    Stored --> [*] : 上传成功
-    Failed --> Retrying : 重试上传
-    Retrying --> Uploading
-    Failed --> Ready : 取消上传
-    Error --> Ready : 返回重选
-    
-    note right of Validating
-        文件验证：
-        - 格式检查
-        - 大小限制
-        - 类型白名单
-    end note
-    
-    note right of Processing
-        后端处理：
-        - 生成UUID文件名
-        - 格式转换(如需要)
-        - 存储到指定位置
-    end note
-```
+*   核心职责: 系统的身份守门员。负责管理所有用户账户的生命周期，处理用户登录（包括密码和SSO）、注册，并签发与刷新JWT。它基于RBAC模型，为其他所有服务提供统一、可靠的认证与授权查询接口。
+*   关键实体: `User`, `Role`, `Permission`, `UserRole`。
+*   交互关系:
+    *   上游: 接收来自 API网关 的登录、注册、用户信息查询等请求。
+    *   下游: 与校园统一身份认证(SSO)系统对接；将用户数据持久化到 MySQL，并将高频访问的用户信息和会话状态缓存至 Redis。
+    *   同级: 为内容模块、社区互动模块、管理后台模块等提供用户权限验证服务。
 
-#### 数据缓存状态
+##### 内容与版块模块 (Content & Board Module)
 
-```mermaid
-stateDiagram-v2
-    [*] --> CacheMiss : 数据请求
-    
-    CacheMiss --> FetchingDB : 查询数据库
-    FetchingDB --> UpdatingCache : 获取数据
-    UpdatingCache --> CacheHit : 缓存更新
-    CacheHit --> ReturningData : 返回数据
-    
-    CacheMiss --> CacheHit : 缓存存在
-    CacheHit --> Validating : 检查有效性
-    Validating --> CacheHit : 仍然有效
-    Validating --> Expired : 缓存过期
-    Expired --> FetchingDB : 重新获取
-    
-    ReturningData --> [*]
-    
-    state CacheManagement {
-        [*] --> Monitoring : 监控缓存
-        Monitoring --> Evicting : 内存不足
-        Monitoring --> Cleaning : 定期清理
-        Evicting --> [*] : 清理完成
-        Cleaning --> [*] : 清理完成
-    }
-    
-    ReturningData --> CacheManagement
-```
+*   核心职责: BBS的核心内容引擎。负责所有与内容创作和组织相关的功能，包括版块的创建与管理、主题帖与回帖的发布、编辑、删除，以及投票和附件的管理。
+*   关键实体: `Board`, `Thread`, `Reply`, `Attachment`, `Poll`, `PollOption`, `Vote`。
+*   交互关系:
+    *   上游: 接收来自 API网关 的内容相关CRUD请求。
+    *   下游: 将内容数据持久化到 MySQL；将附件元信息存入MySQL，文件实体存入对象存储。
+    *   同级: 在执行写操作（如发帖）前，向用户与权限中心查询操作权限；操作完成后，向消息队列发布事件（如 `TopicCreated`），供其他服务消费。
 
-#### 用户权限控制流程
+##### 社区互动模块 (Community Interaction Module)
 
-```mermaid
-sequenceDiagram
-    participant V as 访客
-    participant A as 管理员
-    participant FE as 前端路由
-    participant BE as 后端API
-    participant DB as 数据库
-    
-    Note over V,A: 访客操作流程
-    V->>FE: 访问公开页面
-    FE->>BE: 获取文章数据
-    BE->>DB: 查询公开内容
-    DB-->>BE: 返回数据
-    BE-->>FE: 返回响应
-    FE-->>V: 显示内容
-    
-    Note over V,A: 管理员操作流程
-    A->>FE: 访问管理页面
-    FE->>FE: 检查本地token
-    FE->>BE: 验证token有效性
-    BE-->>FE: 验证结果
-    alt token有效
-        FE-->>A: 进入管理界面
-        A->>BE: 调用管理API
-        BE->>BE: 权限验证
-        BE->>DB: 执行操作
-        BE-->>A: 返回成功
-    else token无效/过期
-        FE-->>A: 跳转到登录页
-        A->>BE: 提交登录凭证
-        BE->>DB: 验证用户信息
-        BE-->>FE: 返回新token
-        FE-->>A: 进入管理界面
-    end
-```
+*   核心职责: 驱动社区活跃度和治理的核心。管理用户间的社交互动行为，如点赞、收藏、关注。同时，它也是通知系统的核心，负责生成和推送各类通知。举报处理流程也由此模块驱动。
+*   关键实体: `Like`, `Favorite`, `Follow`, `Report`, `Notification`, `ModerationLog`。
+*   交互关系:
+    *   上游: 接收来自 API网关 的互动操作请求（点赞、关注等）。
+    *   下游: 将互动关系数据持久化到 MySQL。
+    *   同级: 消费来自消息队列的事件（如 `TopicCreated`, `ReplyCreated`, `LikeReceived`），异步生成个性化Feed流和用户通知。当处理举报时，会调用内容模块的接口来操作帖子。
 
-### 数据模型关系图
+##### 搜索与AI模块 (Search & AI Module)
+
+*   核心职责: 提升信息检索效率和内容价值。负责提供全局搜索功能，并集成AI能力以实现内容摘要和知识库语义检索。
+*   关键实体: 此模块主要维护非关系型索引，不拥有核心业务实体。
+*   交互关系:
+    *   上游: 接收来自 API网关 的搜索请求。
+    *   下游: 将内容数据索引到 Elasticsearch 中；调用外部AI大语言模型服务生成摘要和文本向量，并将向量存入向量数据库。
+    *   同级: 通过消费消息队列的事件或定期轮询，从内容模块同步最新的内容数据，以保持索引的实时性。
+
+##### 管理后台模块 (Admin Console Module)
+
+*   核心职责: 为版主和管理员提供一个统一的管理操作后台。它本身不包含复杂的业务逻辑，而是作为一层BFF (Backend for Frontend)，聚合了对其他微服务的调用，并施加了严格的管理员权限校验。
+*   关键实体: 不拥有自身的核心实体，主要操作其他模块的实体。
+*   交互关系:
+    *   上游: 接收来自管理后台前端的API请求。
+    *   同级: 根据请求，调用用户与权限中心（管理用户、任命版主）、内容模块（删帖、置顶）、社区互动模块（处理举报）等服务的接口，完成相应的管理操作。
+
+---
+
+#### 4.4 数据模型关系图 (ER Diagram)
+
+以下实体关系图（ERD）详细描绘了系统核心业务对象的结构及其关联关系，为数据库设计提供了蓝图。
 
 ```mermaid
 erDiagram
-    USER ||--o{ NOTE : creates
-    USER ||--o{ COMMENT : writes
-    NOTE ||--o{ COMMENT : has
-    NOTE }o--|| CATEGORY : belongs_to
-    NOTE }o--o{ TAG : has
-    
     USER {
-        string id PK
-        string username
-        string password_hash
-        string email
-        datetime created_at
+        bigint id PK "用户ID"
+        varchar username "用户名"
+        varchar hashed_password "哈希密码"
+        varchar email "邮箱"
+        varchar student_id_encrypted "加密学号"
+        varchar role "角色 (user, moderator, admin)"
+        varchar status "状态 (active, banned)"
+        datetime created_at "创建时间"
     }
-    
-    NOTE {
-        string id PK
-        string title
-        text content
-        string summary
-        string status
-        string category_id FK
-        datetime created_at
-        datetime updated_at
+
+    BOARD {
+        int id PK "版块ID"
+        varchar name "版块名称"
+        varchar description "版块描述"
+        varchar icon_url "图标URL"
+        int parent_id FK "父版块ID"
+        int sort_order "排序"
     }
-    
-    COMMENT {
-        string id PK
-        string content
-        string author_name
-        string author_email
-        string note_id FK
-        string parent_id FK
-        boolean is_pinned
-        datetime created_at
+
+    BOARD_MODERATOR {
+        int board_id PK, FK "版块ID"
+        bigint user_id PK, FK "用户ID"
     }
-    
-    CATEGORY {
-        string id PK
-        string name
-        string slug
+
+    THREAD {
+        bigint id PK "主题帖ID"
+        int board_id FK "所属版块ID"
+        bigint author_id FK "作者ID"
+        varchar title "标题"
+        text content "内容"
+        text summary_ai "AI摘要"
+        boolean is_anonymous "是否匿名"
+        boolean is_pinned "是否置顶"
+        boolean is_essence "是否精华"
+        datetime created_at "发布时间"
     }
-    
-    TAG {
-        string id PK
-        string name
-        string slug
+
+    REPLY {
+        bigint id PK "回帖ID"
+        bigint thread_id FK "所属主题ID"
+        bigint author_id FK "作者ID"
+        bigint parent_id FK "回复的上一级回帖ID"
+        text content "内容"
+        boolean is_anonymous "是否匿名"
+        int floor_number "楼层号"
+        datetime created_at "发布时间"
     }
+
+    FOLLOW {
+        bigint follower_id PK, FK "关注者ID"
+        bigint followee_id PK, FK "被关注目标ID"
+        varchar follow_type PK "关注类型 (user, board)"
+    }
+
+    INTERACTION {
+        bigint user_id PK, FK "用户ID"
+        bigint target_id PK "目标ID"
+        varchar target_type PK "目标类型 (thread, reply)"
+        varchar interaction_type PK "互动类型 (like, favorite)"
+    }
+
+    REPORT {
+        bigint id PK "举报ID"
+        bigint reporter_id FK "举报者ID"
+        bigint target_id "被举报目标ID"
+        varchar target_type "目标类型 (thread, reply, user)"
+        varchar reason "举报理由"
+        varchar status "状态 (pending, processed, ignored)"
+        bigint handler_id FK "处理人ID"
+        datetime created_at "举报时间"
+    }
+
+    NOTIFICATION {
+        bigint id PK "通知ID"
+        bigint recipient_id FK "接收者ID"
+        varchar type "通知类型 (reply, like, follow, system)"
+        boolean is_read "是否已读"
+        json metadata "相关元数据 (如触发者ID, 帖子ID)"
+        datetime created_at "创建时间"
+    }
+
+    POLL {
+        bigint id PK "投票ID"
+        bigint thread_id FK "关联的主题帖ID"
+        varchar question "投票问题"
+        int max_choices "最大可选项"
+        datetime deadline "截止日期"
+    }
+
+    POLL_OPTION {
+        bigint id PK "投票选项ID"
+        bigint poll_id FK "所属投票ID"
+        varchar text "选项内容"
+    }
+
+    POLL_VOTE {
+        bigint poll_option_id PK, FK "选项ID"
+        bigint user_id PK, FK "投票用户ID"
+        datetime created_at "投票时间"
+    }
+
+    USER ||--|{ THREAD : "发布"}
+    USER ||--|{ REPLY : "发布"}
+    USER ||--|{ REPORT : "发起"}
+    USER ||--|{ NOTIFICATION : "接收"}
+    BOARD ||--|{ THREAD : "包含"}
+    THREAD ||--|{ REPLY : "包含"}
+    THREAD ||--o{ POLL : "拥有"}
+    POLL ||--|{ POLL_OPTION : "包含"}
+
+    {USER }o--o{ BOARD : "通过 BOARD_MODERATOR 管理"}
+    {USER }o--o{ USER : "通过 FOLLOW 关注"}
+    {USER }o--o{ BOARD : "通过 FOLLOW 关注"}
+    {USER }o--o{ THREAD : "通过 INTERACTION 互动"}
+    {USER }o--o{ REPLY : "通过 INTERACTION 互动"}
+    {USER }o--o{ POLL_OPTION : "通过 POLL_VOTE 投票"}
 ```
